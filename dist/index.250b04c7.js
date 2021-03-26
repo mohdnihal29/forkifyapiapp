@@ -454,9 +454,9 @@ require('core-js/stable');
 require('regenerator-runtime/runtime');
 var _viewsSearchViewJsDefault = _parcelHelpers.interopDefault(_viewsSearchViewJs);
 var _viewsResultsViewJsDefault = _parcelHelpers.interopDefault(_viewsResultsViewJs);
-if (module.hot) {
-  module.hot.accept;
-}
+// if (module.hot) {
+// module.hot.accept;
+// }
 const controlRecipes = async function () {
   try {
     const id = window.location.hash.slice(1);
@@ -483,7 +483,8 @@ const controlSearchResults = async function () {
     await _modelJs.loadSearchResults(query);
     // 3) Render search reuslts
     console.log(_modelJs.state.search.results);
-    _viewsResultsViewJsDefault.default.render(_modelJs.state.search.results);
+    // resultsView.render(model.state.search.results);
+    _viewsResultsViewJsDefault.default.render(_modelJs.getSearchResultsPage(2));
   } catch (err) {
     console.log(err);
   }
@@ -12364,6 +12365,9 @@ _parcelHelpers.export(exports, "loadRecipe", function () {
 _parcelHelpers.export(exports, "loadSearchResults", function () {
   return loadSearchResults;
 });
+_parcelHelpers.export(exports, "getSearchResultsPage", function () {
+  return getSearchResultsPage;
+});
 require('regenerator-runtime');
 var _configJs = require('./config.js');
 var _helpersJs = require('./helpers.js');
@@ -12371,7 +12375,9 @@ const state = {
   recipe: {},
   search: {
     query: '',
-    results: []
+    results: [],
+    page: 1,
+    resultsPerPage: _configJs.RES_PER_PAGE
   }
 };
 const loadRecipe = async function (id) {
@@ -12411,6 +12417,12 @@ const loadSearchResults = async function (query) {
     console.log(err);
     throw err;
   }
+};
+const getSearchResultsPage = function (page = state.search.page) {
+  state.search.page = page;
+  const start = (page - 1) * state.search.resultsPerPage;
+  const end = page * state.search.resultsPerPage;
+  return state.search.results.slice(start, end);
 };
 
 },{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","regenerator-runtime":"62Qib","./config.js":"6pr2F","./helpers.js":"581KF"}],"5gA8y":[function(require,module,exports) {
@@ -12464,8 +12476,12 @@ _parcelHelpers.export(exports, "API_URL", function () {
 _parcelHelpers.export(exports, "TIMEOUT_SEC", function () {
   return TIMEOUT_SEC;
 });
+_parcelHelpers.export(exports, "RES_PER_PAGE", function () {
+  return RES_PER_PAGE;
+});
 const API_URL = 'https://forkify-api.herokuapp.com/api/v2/recipes/';
 const TIMEOUT_SEC = 10;
+const RES_PER_PAGE = 10;
 
 },{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"581KF":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
@@ -12615,7 +12631,7 @@ class RecipeView extends _ViewJsDefault.default {
 }
 exports.default = new RecipeView();
 
-},{"url:../../img/icons.svg":"3t5dV","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","fractional":"5jzJt","./View.js":"2fT4v"}],"3t5dV":[function(require,module,exports) {
+},{"url:../../img/icons.svg":"3t5dV","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","./View.js":"2fT4v","fractional":"5jzJt"}],"3t5dV":[function(require,module,exports) {
 module.exports = require('./bundle-url').getBundleURL() + "icons.d4a14980.svg"
 },{"./bundle-url":"3seVR"}],"3seVR":[function(require,module,exports) {
 "use strict";
@@ -12663,7 +12679,79 @@ function getOrigin(url) {
 exports.getBundleURL = getBundleURLCached;
 exports.getBaseURL = getBaseURL;
 exports.getOrigin = getOrigin;
-},{}],"5jzJt":[function(require,module,exports) {
+},{}],"2fT4v":[function(require,module,exports) {
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+var _urlImgIconsSvg = require('url:../../img/icons.svg');
+var _urlImgIconsSvgDefault = _parcelHelpers.interopDefault(_urlImgIconsSvg);
+function _defineProperty(obj, key, value) {
+  if ((key in obj)) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+  return obj;
+}
+class View {
+  constructor() {
+    _defineProperty(this, "_data", void 0);
+    _defineProperty(this, "renderSpinner", function () {
+      const markup = `
+              <div class="spinner">
+                <svg>
+                  <use href="${_urlImgIconsSvgDefault.default}#icon-loader"></use>
+                </svg>
+              </div> 
+              `;
+      this._clear();
+      this._parentElement.insertAdjacentHTML('afterbegin', markup);
+    });
+  }
+  render(data) {
+    if (!data || Array.isArray(data) && data.length === 0) return this.renderError();
+    this._data = data;
+    const markup = this._generateMarkup();
+    this._clear();
+    this._parentElement.insertAdjacentHTML('afterbegin', markup);
+  }
+  _clear() {
+    this._parentElement.innerHTML = '';
+  }
+  renderError(message = this._errorMessage) {
+    const markup = `
+        <div class="error">
+        <div>
+          <svg>
+            <use href="${_urlImgIconsSvgDefault.default}#icon-alert-triangle"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>`;
+    this._clear();
+    this._parentElement.insertAdjacentHTML('afterbegin', markup);
+  }
+  renderMessage(message = this._message) {
+    const markup = `
+        <div class="message">
+        <div>
+          <svg>
+            <use href="${_urlImgIconsSvgDefault.default}#icon-smile"></use>
+          </svg>
+        </div>
+        <p>${message}</p>
+      </div>`;
+    this._clear();
+    this._parentElement.insertAdjacentHTML('afterbegin', markup);
+  }
+}
+exports.default = View;
+
+},{"url:../../img/icons.svg":"3t5dV","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"5jzJt":[function(require,module,exports) {
 /*
 fraction.js
 A Javascript fraction library.
@@ -13032,79 +13120,7 @@ Fraction.primeFactors = function(n)
 
 module.exports.Fraction = Fraction
 
-},{}],"2fT4v":[function(require,module,exports) {
-var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
-_parcelHelpers.defineInteropFlag(exports);
-var _urlImgIconsSvg = require('url:../../img/icons.svg');
-var _urlImgIconsSvgDefault = _parcelHelpers.interopDefault(_urlImgIconsSvg);
-function _defineProperty(obj, key, value) {
-  if ((key in obj)) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-  return obj;
-}
-class View {
-  constructor() {
-    _defineProperty(this, "_data", void 0);
-    _defineProperty(this, "renderSpinner", function () {
-      const markup = `
-              <div class="spinner">
-                <svg>
-                  <use href="${_urlImgIconsSvgDefault.default}#icon-loader"></use>
-                </svg>
-              </div> 
-              `;
-      this._clear();
-      this._parentElement.insertAdjacentHTML('afterbegin', markup);
-    });
-  }
-  render(data) {
-    if (!data || Array.isArray(data) && data.length === 0) return this.renderError();
-    this._data = data;
-    const markup = this._generateMarkup();
-    this._clear();
-    this._parentElement.insertAdjacentHTML('afterbegin', markup);
-  }
-  _clear() {
-    this._parentElement.innerHTML = '';
-  }
-  renderError(message = this._errorMessage) {
-    const markup = `
-        <div class="error">
-        <div>
-          <svg>
-            <use href="${_urlImgIconsSvgDefault.default}#icon-alert-triangle"></use>
-          </svg>
-        </div>
-        <p>${message}</p>
-      </div>`;
-    this._clear();
-    this._parentElement.insertAdjacentHTML('afterbegin', markup);
-  }
-  renderMessage(message = this._message) {
-    const markup = `
-        <div class="message">
-        <div>
-          <svg>
-            <use href="${_urlImgIconsSvgDefault.default}#icon-smile"></use>
-          </svg>
-        </div>
-        <p>${message}</p>
-      </div>`;
-    this._clear();
-    this._parentElement.insertAdjacentHTML('afterbegin', markup);
-  }
-}
-exports.default = View;
-
-},{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","url:../../img/icons.svg":"3t5dV"}],"3rYQ6":[function(require,module,exports) {
+},{}],"3rYQ6":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 var _ViewJs = require('./View.js');
@@ -13145,7 +13161,7 @@ class SearchView extends _ViewJsDefault.default {
 }
 exports.default = new SearchView();
 
-},{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","./View.js":"2fT4v","url:../../img/icons.svg":"3t5dV"}],"17PYN":[function(require,module,exports) {
+},{"./View.js":"2fT4v","url:../../img/icons.svg":"3t5dV","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}],"17PYN":[function(require,module,exports) {
 var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
 _parcelHelpers.defineInteropFlag(exports);
 var _ViewJs = require('./View.js');
@@ -13190,6 +13206,6 @@ class ResultsView extends _ViewJsDefault.default {
 }
 exports.default = new ResultsView();
 
-},{"./View.js":"2fT4v","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","url:../../img/icons.svg":"3t5dV"}]},["7BONy","3miIZ"], "3miIZ", "parcelRequirefade")
+},{"./View.js":"2fT4v","url:../../img/icons.svg":"3t5dV","@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y"}]},["7BONy","3miIZ"], "3miIZ", "parcelRequirefade")
 
 //# sourceMappingURL=index.250b04c7.js.map
