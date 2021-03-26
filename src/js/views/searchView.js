@@ -1,4 +1,7 @@
-class SearchView {
+import View from './View.js';
+import icons from 'url:../../img/icons.svg';
+
+class SearchView extends View {
   _parentEl = document.querySelector('.search');
 
   getQuery() {
