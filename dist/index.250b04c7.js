@@ -503,10 +503,16 @@ const controlServings = function (newServings) {
   // recipeView.render(model.state.recipe);
   _viewsRecipeViewJsDefault.default.update(_modelJs.state.recipe);
 };
+const controlAddBookmark = function () {
+  if (!_modelJs.state.recipe.bookmarked) _modelJs.addBookmark(_modelJs.state.recipe); else _modelJs.deleteBookMark(_modelJs.state.recipe.id);
+  console.log(_modelJs.state.recipe);
+  _viewsRecipeViewJsDefault.default.update(_modelJs.state.recipe);
+};
 // event
 const init = function () {
   _viewsRecipeViewJsDefault.default.addHandlerRender(controlRecipes);
   _viewsRecipeViewJsDefault.default.addHandlerUpdateServings(controlServings);
+  _viewsRecipeViewJsDefault.default.addHandlerAddBookmark(controlAddBookmark);
   _viewsSearchViewJsDefault.default.addHandlerSearch(controlSearchResults);
   _viewsPaginationViewJsDefault.default.addHandlerClick(controlPagination);
 };
@@ -12387,6 +12393,12 @@ _parcelHelpers.export(exports, "getSearchResultsPage", function () {
 _parcelHelpers.export(exports, "updateServings", function () {
   return updateServings;
 });
+_parcelHelpers.export(exports, "addBookmark", function () {
+  return addBookmark;
+});
+_parcelHelpers.export(exports, "deleteBookMark", function () {
+  return deleteBookMark;
+});
 require('regenerator-runtime');
 var _configJs = require('./config.js');
 var _helpersJs = require('./helpers.js');
@@ -12397,7 +12409,8 @@ const state = {
     results: [],
     page: 1,
     resultsPerPage: _configJs.RES_PER_PAGE
-  }
+  },
+  bookmarks: []
 };
 const loadRecipe = async function (id) {
   try {
@@ -12413,7 +12426,8 @@ const loadRecipe = async function (id) {
       cookingTime: recipe.cooking_time,
       ingredients: recipe.ingredients
     };
-    console.log(state.recipe);
+    if (state.bookmarks.some(bookmark => bookmark.id === id)) state.recipe.bookmarked = true; else state.recipe.bookmarked = false;
+    console.log(state.bookmarks);
   } catch (err) {
     console.log(err);
     throw err;
@@ -12432,6 +12446,7 @@ const loadSearchResults = async function (query) {
         title: rec.title
       };
     });
+    state.search.page = 1;
   } catch (err) {
     console.log(err);
     throw err;
@@ -12448,6 +12463,19 @@ const updateServings = function (newServings) {
     ing.quantity = ing.quantity * newServings / state.recipe.servings;
   });
   state.recipe.servings = newServings;
+};
+const addBookmark = function (recipe) {
+  // Add bookmark
+  state.bookmarks.push(recipe);
+  // Mark current recipe as bookmark
+  if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
+};
+const deleteBookMark = function (id) {
+  // Delete Bookmark
+  const index = state.bookmarks.findIndex(el => el.id === id);
+  state.bookmarks.splice(index, id);
+  // Mark current recipe as  NOT bookmark
+  if (id = state.recipe.id) state.recipe.bookmarked = false;
 };
 
 },{"@parcel/transformer-js/lib/esmodule-helpers.js":"5gA8y","regenerator-runtime":"62Qib","./config.js":"6pr2F","./helpers.js":"581KF"}],"5gA8y":[function(require,module,exports) {
@@ -12572,6 +12600,13 @@ class RecipeView extends _ViewJsDefault.default {
       if (+updateTo > 0) handler(+updateTo);
     });
   }
+  addHandlerAddBookmark(handler) {
+    this._parentElement.addEventListener('click', function (e) {
+      const btn = e.target.closest('.btn--bookmark');
+      if (!btn) return;
+      handler();
+    });
+  }
   _generateMarkup() {
     return `
     <figure class="recipe__fig">
@@ -12613,9 +12648,9 @@ class RecipeView extends _ViewJsDefault.default {
           <div class="recipe__user-generated">
            
           </div>
-          <button class="btn--round">
+          <button class="btn--round btn--bookmark">
             <svg class="">
-              <use href="${_urlImgIconsSvgDefault.default}#icon-bookmark-fill"></use>
+              <use href="${_urlImgIconsSvgDefault.default}#icon-bookmark${this._data.bookmarked ? '-fill' : ''}"></use>
             </svg>
           </button>
         </div>
